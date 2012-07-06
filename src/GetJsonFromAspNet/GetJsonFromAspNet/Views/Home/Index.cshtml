@@ -1,0 +1,161 @@
+﻿@{
+    ViewBag.Title = "Get JSON from ASP.NET";
+}
+<h2>@ViewBag.Title</h2>
+<p>
+    The many ways to retrieve JSON data from ASP.NET web sites and web applications
+    (Web Forms and MVC).</p>
+<p>
+    The data is rendered below via various client-side templating libraries (Mustache,
+    Handlebars, JSRender and jQuery Templates).</p>
+<p>
+    In general, these example are ordered from the <strong>least preferred method to the
+        most preferred method</strong>.</p>
+<h3>
+    Using an ASP.NET Web Forms page (.aspx)</h3>
+<ul>
+    <li>
+        <button class="get-data" data-url="/PeoplePage.aspx">
+            Get data from page (Objects)</button></li>
+    <li>
+        <button class="get-data" data-url="/PeoplePage.aspx/GetViaWebMethod">
+            Get data from page via static WebMethod (Objects)</button></li>
+</ul>
+<h3>
+    Using an ASP.NET HTTP Handler (.ashx)</h3>
+<ul>
+    <li>
+        <button class="get-data" data-url="/PeopleHandler.ashx">
+            Get data from web service (Objects)</button></li>
+</ul>
+<h3>
+    Using an ASP.NET Web Service (.asmx)</h3>
+<ul>
+    <li>
+        <button class="get-data" data-url="/PeopleService.asmx/GetPeople">
+            Get data from web service (Objects)</button></li>
+    <li>
+        <button class="get-data" data-url="/PeopleService.asmx/GetPeopleDictionary">
+            Get data from web service (Dictionary)</button></li>
+</ul>
+<h3>
+    Using and ASP.NET MVC controller</h3>
+<ul>
+    <li>
+        <button class="get-data" data-url="/Home/GetPeopleViaJson">
+            Get data from MVC controller (Objects)</button></li>
+    <li>
+        <button class="get-data" data-url="/Home/GetPeopleViaJsonDotNetActionResult">
+            Get data from MVC controller via Json.NET (Objects)</button></li>
+    <li>
+        <button class="get-data" data-url="/Home/GetPeopleViaJsonDotNet">
+            Get data from MVC controller via a Json.NET Action Result (Objects)</button></li>
+</ul>
+<h2>
+    (Not implemented yet)</h2>
+<h3>
+    Using an ASP.NET MVC Web API Controller </strong></h3>
+<ul>
+    <li>
+        <button class="get-data" data-url="/Api/People/">
+            Get data from a Web API controller (Objects)</button></li>
+</ul>
+<div id="result">
+</div>
+<script type="text/javascript">
+    if ( typeof ( console ) === 'undefined' || console == null ) {
+        console = { log: function () { } };
+    }
+
+    (function ( $ ) {
+        $( function () {
+            $( '.get-data' ).click( function () {
+                $( '#result' ).html( '' );
+
+                var dataUrl = $( this ).attr( 'data-url' );
+
+                $.ajax( {
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    url: dataUrl,
+                    data: '{}',
+                    dataType: 'json',
+                    success: function ( data ) {
+                        var people;
+
+                        if ( data.d ) {
+                            people = data.d;
+                        }
+                        else {
+                            // If you're writing directly to the response stream from an ASP.NET Web Forms Page or Handler, there wont be a 'd' property.
+                            people = data;
+                        }
+
+                        console.log( people );
+
+
+                        $( '#result' ).append( '<h3>Mustache</h3>' );
+
+                        var source = $( '#mustache-template' ).html();
+
+                        for ( var i = 0; i < people.length; i++ ) {
+                            var html = Mustache.to_html( source, people[i] );
+
+                            $( '#result' ).append( html );
+                        }
+
+
+                        $( '#result' ).append( '<h3>Handlebars</h3>' );
+
+                        var source = $( '#handlebars-template' ).html();
+                        var template = Handlebars.compile( source );
+
+                        for ( var i = 0; i < people.length; i++ ) {
+                            var html = template( people[i] );
+
+                            $( '#result' ).append( html );
+                        }
+
+
+                        $( '#result' ).append( '<h3>JS Render</h3>' );
+
+                        $( "#result" ).append( $( "#jsrender-template" ).render( people ) );
+
+
+
+                        $( '#result' ).append( '<h3>jQuery Templates</h3>' );
+
+                        $( '#jquery-template' ).tmpl( people ).appendTo( '#result' );
+
+                        // Or using a cached template:
+                        // $('#jquery-template').template('jquery-template');
+                        // $.tmpl('jquery-template', people).appendTo('#result');
+                    },
+                    error: function ( e ) {
+                        console.log( e );
+                    }
+                } );
+            } );
+        } );
+    } )( jQuery );
+</script>
+<script id="mustache-template" type="text/x-mustache-template">
+<div>
+    <b>{{Name}}</b> is from {{Address.State}} and is {{Age}} years old!
+</div>
+</script>
+<script id="handlebars-template" type="text/x-handlebars-template">
+<div>
+    <b>{{Name}}</b> is from {{Address.State}} and is {{Age}} years old!
+</div>
+</script>
+<script id="jsrender-template" type="text/x-jsrender">
+<div>
+    <b>{{>Name}}</b> is from {{>Address.State}} and is {{>Age}} years old!
+</div>
+</script>
+<script id="jquery-template" type="text/x-jquery-tmpl">
+<div>
+    <b>${Name}</b> is from ${Address.State} and is ${Age} years old!
+</div>
+</script>
